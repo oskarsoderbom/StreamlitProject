@@ -11,16 +11,13 @@ def run_simulation():
 
 st.title('Simulation Dashboard')
 
-if st.button('Start Simulation'):
+if st.button('Start Simulation of remaining fixtures'):
     # Run the simulation when the button is clicked
     simulation = run_simulation()
 
     # Display the simulation output in a table
     st.table(pd.DataFrame(simulation))
 
-
-
-st.title('Simulation Dashboard')
 
 if st.button('Simulate Single Game'):
     # Run the single game simulation when the button is clicked
