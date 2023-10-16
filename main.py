@@ -8,9 +8,6 @@ def main():
     home = 'AIK'
     away = 'MalmöFF'
 
-    
-    
-
     # Call the function
     model = model_optimisation_and_testing(df, home, away)
 
