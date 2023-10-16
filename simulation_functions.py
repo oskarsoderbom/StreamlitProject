@@ -3,74 +3,9 @@ import numpy as np
 from math import factorial
 from itertools import product as cart_product
 from datetime import date
-from time import time
-from bs4 import BeautifulSoup
-import requests
-import re
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Tuple, Dict, Callable
-#Definitions used later, moved here for easy access and testing
-#Home/Away is only used for calculating a single game
-#N is the number of MC-calcs, use 1 when testing. 100k should take approx. 8 mins.
-home = 'MalmöFF'
-away = 'AIK'
-date = date.today()
-
-def getdata(print=False):
-      
-    datex = date.today()
-#Scrape data from allsvenskan.se
-
-    URL = "https://www.allsvenskan.se/matcher"
-    html = requests.get(URL)
-    soup = BeautifulSoup(html.content, features='lxml')
-    p_matches = soup.find_all("a", {"class": re.compile('match-id-')})
-
-    matchp = []
-    for match in p_matches:
-        teams = match.find("div", {"class": "teams"}).text
-        result = match.find("div", {"class": "match-score"}).text
-        matchp.append([teams, result])
-
-        #Convert to pandas Dataframe and cleans data
-    all_matches = pd.DataFrame(matchp, columns=['teams','result'])
-
-
-    all_matches['HomeTeam'] = all_matches['teams'].str.split('-').str[0]
-    all_matches['AwayTeam'] = all_matches['teams'].str.split('-').str[1]
-    all_matches['FTHG'] = all_matches['result'].str.split('-').str[0]
-    all_matches['FTAG'] = all_matches['result'].str.split('-').str[1]
-    dataframe = all_matches.drop(columns=['teams', 'result'])
-    dataframe['HomeTeam'] = dataframe['HomeTeam'].str.replace(' ', '')
-    dataframe['AwayTeam'] = dataframe['AwayTeam'].str.replace(' ', '')
-    dataframe['FTAG'] = dataframe['FTAG'].str.replace(' ', '')
-    dataframe['FTHG'] = dataframe['FTHG'].str.replace(' ', '')
-
-
-
-
-    dataframe[["FTAG", "FTHG"]] = dataframe[["FTAG", "FTHG"]].apply(pd.to_numeric)
-    dataout = dataframe.drop_duplicates()
-
-    matchday = []
-    for i in range(1,30):
-        for j in range(1,9):
-            matchday.append(i)
-
-    dataout['Matchday'] = matchday[:len(dataout)]
-    
-    if print:
-
-        path = "DataOutput/allsvenskan2022_"
-        dataout.to_csv(f'{path}{datex.strftime("%d-%m-%Y")}.csv')
-
-    return dataout
-
-df = getdata()
-print("Data created")
-
-
 
 def log_likelihood(dataset: pd.DataFrame, alpha: dict, beta: dict, gamma: float) -> float:
     """
@@ -276,8 +211,7 @@ def model_optimisation_and_testing(df, home, away):
 
     return model
 
-# Call the function
-model = model_optimisation_and_testing(df, home, away)
+
 
 
 def single_game(home_team: str, away_team: str, score_probability: Callable, model: Tuple[Dict[str, float], Dict[str, float], float]) -> None:
@@ -322,24 +256,7 @@ def single_game(home_team: str, away_team: str, score_probability: Callable, mod
     plt.savefig('ChartOutput\heatmap.png')
     
 
-single_game(home, away, score_probability, model)
-
-
-
-# Compute remaining fixtures
-teams = df.HomeTeam.unique()
-matches = list(filter(lambda x: x[0] != x[1], cart_product(teams, teams)))
-played = list(zip(df.HomeTeam, df.AwayTeam))
-to_play = list(filter(lambda x: x not in played, matches)) 
-
-
-
-points = compute_points(df)
-sorted_teams = sorted(teams, key=lambda x: points[x], reverse=True)
-counts = pd.DataFrame(0, columns=['Winner', 'Europe', 'PlayOffs','Relegated'], index=sorted_teams)
-
-print("Starting simulation")
-def simulate_all(N: int = 1) -> pd.DataFrame:
+def simulate_all(dataframe: pd.DataFrame, model: Tuple[Dict[str, float], Dict[str, float], float], N: int = 1) -> pd.DataFrame:
     """
     This function simulates all the remaining matches in the league and updates the points table accordingly.
     It also counts the number of times each team finishes in each position (Winner, Europe, PlayOffs, Relegated).
@@ -353,6 +270,19 @@ def simulate_all(N: int = 1) -> pd.DataFrame:
     Returns:
     pd.DataFrame: A DataFrame with the proportion of times each team finishes in each position.
     """
+
+
+    # Compute remaining fixtures
+    teams = dataframe.HomeTeam.unique()
+    matches = list(filter(lambda x: x[0] != x[1], cart_product(teams, teams)))
+    played = list(zip(dataframe.HomeTeam, dataframe.AwayTeam))
+    to_play = list(filter(lambda x: x not in played, matches)) 
+
+
+
+    points = compute_points(dataframe)
+    sorted_teams = sorted(teams, key=lambda x: points[x], reverse=True)
+    counts = pd.DataFrame(0, columns=['Winner', 'Europe', 'PlayOffs','Relegated'], index=sorted_teams)
     for i in range(N):
     
         simulated_points = points.copy()
@@ -376,13 +306,6 @@ def simulate_all(N: int = 1) -> pd.DataFrame:
     
     return counts/N
 
-start = time()
-SIMRUNS = 5_000
-simulation = simulate_all(SIMRUNS)
-simulationtime = round(time() - start, 2)/60
 
-print(f"{SIMRUNS} simulations took {simulationtime} minutes")
-
-print(simulation)
 
 
