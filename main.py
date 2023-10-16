@@ -20,8 +20,8 @@ def main():
 
     print(f"{SIMRUNS} simulations took {simulationtime} minutes")
 
-    print(simulation)
-    return
+    
+    return simulation
 
 
 if __name__ == '__main__':

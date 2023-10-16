@@ -248,12 +248,14 @@ def single_game(home_team: str, away_team: str, score_probability: Callable, mod
     print(away_team, 'win probablity:', away_win)
 
 # Plot
+    fig, ax = plt.subplots()
     ax = sns.heatmap(score_probs[:6, :6], annot=True, fmt='.3f', cbar=False, cmap="YlGnBu")
     ax.set_xlabel(home_team + ' goals')
     ax.set_ylabel(away_team + ' goals')
     ax.xaxis.set_label_position('top')
     ax.xaxis.tick_top()
-    plt.savefig('ChartOutput\heatmap.png')
+
+    return fig, home_win, away_win
     
 
 def simulate_all(dataframe: pd.DataFrame, model: Tuple[Dict[str, float], Dict[str, float], float], N: int = 1) -> pd.DataFrame:
