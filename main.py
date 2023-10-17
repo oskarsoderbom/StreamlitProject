@@ -2,7 +2,7 @@ from simulation_functions import model_optimisation_and_testing, single_game, sc
 from data_functions import getdata
 from time import time
 
-def main():
+def main(runs: int = 5_000):
 
     df = getdata()
     home = 'AIK'
@@ -14,7 +14,7 @@ def main():
     single_game(home, away, score_probability, model)
 
     start = time()
-    SIMRUNS = 5_000
+    SIMRUNS = runs
     simulation = simulate_all(N= SIMRUNS, dataframe=df, model=model)
     simulationtime = round(time() - start, 2)/60
 
