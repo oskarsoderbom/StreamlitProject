@@ -212,8 +212,6 @@ def model_optimisation_and_testing(df, home, away):
     return model
 
 
-
-
 def single_game(home_team: str, away_team: str, score_probability: Callable, model: Tuple[Dict[str, float], Dict[str, float], float]) -> None:
     """
     This function simulates a single game between two teams and visualizes the results in a heatmap.
@@ -273,22 +271,21 @@ def simulate_all(dataframe: pd.DataFrame, model: Tuple[Dict[str, float], Dict[st
     pd.DataFrame: A DataFrame with the proportion of times each team finishes in each position.
     """
 
-
     # Compute remaining fixtures
     teams = dataframe.HomeTeam.unique()
     matches = list(filter(lambda x: x[0] != x[1], cart_product(teams, teams)))
     played = list(zip(dataframe.HomeTeam, dataframe.AwayTeam))
     to_play = list(filter(lambda x: x not in played, matches)) 
 
-
-
     points = compute_points(dataframe)
-    sorted_teams = sorted(teams, key=lambda x: points[x], reverse=True)
-    counts = pd.DataFrame(0, columns=['Winner', 'Europe', 'PlayOffs','Relegated'], index=sorted_teams)
+    goals_scored = dataframe.groupby('HomeTeam').FTHG.sum().add(dataframe.groupby('AwayTeam').FTAG.sum(), fill_value=0).to_dict()
+    goals_conceded = dataframe.groupby('HomeTeam').FTAG.sum().add(dataframe.groupby('AwayTeam').FTHG.sum(), fill_value=0).to_dict()
+
     for i in range(N):
-    
         simulated_points = points.copy()
-    
+        simulated_goals_scored = goals_scored.copy()
+        simulated_goals_conceded = goals_conceded.copy()
+
         for home, away in to_play:
             hg, ag = predict_game(home, away, *model)
             if hg > ag:
@@ -297,17 +294,27 @@ def simulate_all(dataframe: pd.DataFrame, model: Tuple[Dict[str, float], Dict[st
                 simulated_points[away] += 3
             else:
                 simulated_points[home] += 1
-                simulated_points[away] += 1       
-   
-        ranking = sorted(simulated_points, key=lambda x: simulated_points[x], reverse=True)
-      
-        counts.Winner[ranking[0]] += 1
-        counts.Europe[ranking[1:3]] +=1
-        counts.PlayOffs[ranking[-3]] +=1
-        counts.Relegated[ranking[-2:]] += 1
-    
-    return counts/N
+                simulated_points[away] += 1
 
+            simulated_goals_scored[home] += hg
+            simulated_goals_scored[away] += ag
+            simulated_goals_conceded[home] += ag
+            simulated_goals_conceded[away] += hg
+
+    # Create a DataFrame for the final standings
+    final_standings = pd.DataFrame({
+        'Points': simulated_points,
+        'GoalsScored': simulated_goals_scored,
+        'GoalsConceded': simulated_goals_conceded
+    })
+
+    # Add a column for the goal difference
+    final_standings['(+/-)'] = final_standings['GoalsScored'] - final_standings['GoalsConceded']
+
+    # Sort the final standings by points and goal difference
+    final_standings.sort_values(by=['Points', '(+/-)'], ascending=False, inplace=True)
+
+    return final_standings
 
 
 

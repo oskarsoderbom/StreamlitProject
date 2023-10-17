@@ -5,10 +5,7 @@ import pandas as pd
 import re
 
 
-def getdata(print=False):
-      
-    datex = date.today()
-    #Scrape data from allsvenskan.se
+def getdata():
 
     URL = "https://www.allsvenskan.se/matcher"
     html = requests.get(URL)

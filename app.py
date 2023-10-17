@@ -16,9 +16,31 @@ N = st.number_input('Enter number of simulations', min_value=1, value=5000, step
 if st.button('Start Simulation of remaining fixtures'):
     # Run the simulation when the button is clicked
     simulation = run_simulation(N)
+        # Reset the index of the DataFrame
+    simulation.reset_index(inplace=True)
+    simulation.rename(columns={'index': 'Team'}, inplace=True)
+
+# Define a function to apply the color coding
+    def color_rows(row):
+        if row.name == 0:
+            return pd.Series('color: gold', index=row.index)
+        elif 1 <= row.name <= 2:
+            return pd.Series('color: lightgreen', index=row.index)
+        elif row.name == len(simulation) - 3:
+            return pd.Series('color: lightcoral', index=row.index)
+        elif row.name >= len(simulation) - 2:
+            return pd.Series('color: red', index=row.index)
+
+
+# Apply the color coding to the DataFrame
+        # Apply the color coding to the DataFrame
+    styled_simulation = simulation.style.apply(color_rows, axis=1)
+
 
     # Display the simulation output in a table
-    st.table(pd.DataFrame(simulation))
+    st.table(styled_simulation.hide(axis=0))
+
+
 
 df = getdata()
 home_teams = df['HomeTeam'].unique().tolist()
