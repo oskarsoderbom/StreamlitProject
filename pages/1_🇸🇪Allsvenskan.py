@@ -1,8 +1,13 @@
 import streamlit as st
 import pandas as pd
-import main
-from simulation_functions import single_game, score_probability, model_optimisation_and_testing
-from data_functions import getdata
+import functions.main as main
+from functions.simulation_functions import single_game, score_probability, model_optimisation_and_testing
+from functions.data_functions import getdata
+
+st.set_page_config(
+    page_title="Allsvenskan",
+    page_icon="🇸🇪",
+)
 
 def run_simulation(N: int = 5_000):
     # Call the main function from your main.py file

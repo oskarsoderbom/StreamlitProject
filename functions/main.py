@@ -1,5 +1,5 @@
-from simulation_functions import model_optimisation_and_testing, single_game, score_probability, simulate_all
-from data_functions import getdata
+from functions.simulation_functions import model_optimisation_and_testing, single_game, score_probability, simulate_all
+from functions.data_functions import getdata
 from time import time
 
 def main(runs: int = 5_000):
